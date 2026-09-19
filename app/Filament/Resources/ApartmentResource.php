@@ -166,6 +166,7 @@ class ApartmentResource extends Resource
     {
         return [
             RelationManagers\ResidentsRelationManager::class,
+            RelationManagers\MaintenanceFeesRelationManager::class,
         ];
     }
 
