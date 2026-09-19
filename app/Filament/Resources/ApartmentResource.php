@@ -78,6 +78,12 @@ class ApartmentResource extends Resource
                     ->label('Nivel')
                     ->sortable(),
 
+                Tables\Columns\TextColumn::make('residents_count')
+                    ->label('Residentes')
+                    ->counts('residents')
+                    ->badge()
+                    ->sortable(),
+
                 Tables\Columns\TextColumn::make('status')
                     ->label('Estado')
                     ->badge()
@@ -127,7 +133,7 @@ class ApartmentResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\ResidentsRelationManager::class,
         ];
     }
 
