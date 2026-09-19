@@ -45,4 +45,9 @@ class Apartment extends Model
             ? "Torre {$this->tower} - {$this->number}"
             : $this->number;
     }
+
+    public function maintenanceFees(): HasMany
+    {
+        return $this->hasMany(MaintenanceFee::class);
+    }
 }
