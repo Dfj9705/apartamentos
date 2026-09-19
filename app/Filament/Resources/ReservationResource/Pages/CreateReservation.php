@@ -6,6 +6,7 @@ use App\Filament\Resources\ReservationResource;
 use App\Models\User;
 use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
+use App\Notifications\ReservationConfirmedNotification;
 
 class CreateReservation extends CreateRecord
 {
@@ -38,5 +39,25 @@ class CreateReservation extends CreateRecord
         }
 
         return $user->hasApartment();
+    }
+
+    protected function afterCreate(): void
+    {
+        $reservation = $this->record;
+
+        $reservation->load([
+            'user',
+            'apartment',
+            'commonArea',
+        ]);
+
+        if (
+            $reservation->status === 'confirmed'
+            && $reservation->user
+        ) {
+            $reservation->user->notify(
+                new ReservationConfirmedNotification($reservation)
+            );
+        }
     }
 }

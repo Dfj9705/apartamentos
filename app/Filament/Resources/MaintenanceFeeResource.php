@@ -6,6 +6,7 @@ use App\Filament\Resources\MaintenanceFeeResource\Pages;
 use App\Filament\Resources\MaintenanceFeeResource\RelationManagers;
 use App\Models\Apartment;
 use App\Models\MaintenanceFee;
+use App\Notifications\PaymentRegisteredNotification;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
@@ -223,7 +224,7 @@ class MaintenanceFeeResource extends Resource
                     ])
                     ->action(function (MaintenanceFee $record, array $data): void {
 
-                        $record->payment()->create([
+                        $payment = $record->payment()->create([
                             'amount' => $data['amount'],
                             'paid_at' => $data['paid_at'],
                             'reference' => $data['reference'] ?? null,
@@ -233,6 +234,25 @@ class MaintenanceFeeResource extends Resource
                         $record->update([
                             'status' => 'paid',
                         ]);
+
+                        $record->load([
+                            'apartment.residents.user',
+                        ]);
+
+                        $users = $record->apartment
+                            ->residents
+                            ->where('is_active', true)
+                            ->pluck('user')
+                            ->filter()
+                            ->unique('id');
+
+                        foreach ($users as $user) {
+                            if ($user->email) {
+                                $user->notify(
+                                    new PaymentRegisteredNotification($record, $payment)
+                                );
+                            }
+                        }
 
                         Notification::make()
                             ->title('Pago registrado')

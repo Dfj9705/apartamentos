@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Models\CommonArea;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
+use App\Notifications\ReservationCancelledNotification;
 class ReservationResource extends Resource
 {
     protected static ?string $model = Reservation::class;
@@ -286,6 +287,18 @@ class ReservationResource extends Resource
                         $record->update([
                             'status' => 'cancelled',
                         ]);
+
+                        $record->load([
+                            'user',
+                            'apartment',
+                            'commonArea',
+                        ]);
+
+                        if ($record->user) {
+                            $record->user->notify(
+                                new ReservationCancelledNotification($record)
+                            );
+                        }
                     }),
             ])
             ->bulkActions([
