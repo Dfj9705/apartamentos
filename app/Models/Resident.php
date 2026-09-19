@@ -41,6 +41,12 @@ class Resident extends Model
                 Apartment::find($oldApartmentId)
                         ?->updateOccupancyStatus();
             }
+
+            if ($resident->user) {
+                if (!$resident->user->hasRole('Residente')) {
+                    $resident->user->assignRole('Residente');
+                }
+            }
         });
 
         static::deleted(function (Resident $resident) {

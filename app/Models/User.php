@@ -61,4 +61,17 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->hasOne(Resident::class);
     }
+
+    public function hasApartment(): bool
+    {
+        return $this->resident()
+            ->where('is_active', true)
+            ->whereHas('apartment')
+            ->exists();
+    }
+
+    public function apartment(): ?Apartment
+    {
+        return $this->resident?->apartment;
+    }
 }

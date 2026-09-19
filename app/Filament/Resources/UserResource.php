@@ -105,6 +105,21 @@ class UserResource extends Resource
                     ->label('Activo')
                     ->boolean(),
 
+                Tables\Columns\TextColumn::make('resident.apartment.number')
+                    ->label('Apartamento')
+                    ->formatStateUsing(function ($state, $record) {
+                        if (!$record->resident?->apartment) {
+                            return '—';
+                        }
+
+                        $apartment = $record->resident->apartment;
+
+                        return ($apartment->tower
+                            ? "{$apartment->tower}-"
+                            : '')
+                            . $apartment->number;
+                    }),
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Creado')
                     ->dateTime('d/m/Y H:i')

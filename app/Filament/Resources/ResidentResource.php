@@ -147,10 +147,10 @@ class ResidentResource extends Resource
                     ->searchable()
                     ->toggleable(),
 
-                Tables\Columns\IconColumn::make('user_id')
-                    ->label('Acceso')
-                    ->boolean()
-                    ->getStateUsing(fn($record): bool => $record->user_id !== null),
+                Tables\Columns\TextColumn::make('user.name')
+                    ->label('Usuario')
+                    ->placeholder('Sin acceso')
+                    ->searchable(),
 
                 Tables\Columns\IconColumn::make('is_active')
                     ->label('Activo')
