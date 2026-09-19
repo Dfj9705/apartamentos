@@ -47,15 +47,14 @@ class ApartmentResource extends Resource
                             ->numeric()
                             ->minValue(0),
 
-                        Forms\Components\Select::make('status')
+                        Forms\Components\Placeholder::make('status_display')
                             ->label('Estado')
-                            ->options([
+                            ->content(fn(?Apartment $record): string => match ($record?->status) {
                                 'available' => 'Disponible',
                                 'occupied' => 'Ocupado',
                                 'maintenance' => 'Mantenimiento',
-                            ])
-                            ->default('available')
-                            ->required(),
+                                default => 'Disponible',
+                            }),
                     ])
                     ->columns(2),
             ]);
@@ -122,6 +121,39 @@ class ApartmentResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('maintenance')
+                    ->label('Mantenimiento')
+                    ->icon('heroicon-o-wrench-screwdriver')
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->visible(
+                        fn(Apartment $record): bool =>
+                            $record->status !== 'maintenance'
+                    )
+                    ->action(function (Apartment $record) {
+                        $record->update([
+                            'status' => 'maintenance',
+                        ]);
+                    }),
+
+                Tables\Actions\Action::make('finishMaintenance')
+                    ->label('Finalizar mantenimiento')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->visible(
+                        fn(Apartment $record): bool =>
+                            $record->status === 'maintenance'
+                    )
+                    ->action(function (Apartment $record) {
+                        $record->update([
+                            'status' => $record->residents()
+                                ->where('is_active', true)
+                                ->exists()
+                                ? 'occupied'
+                                : 'available',
+                        ]);
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

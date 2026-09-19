@@ -18,4 +18,19 @@ class Apartment extends Model
     {
         return $this->hasMany(Resident::class);
     }
+
+    public function updateOccupancyStatus(): void
+    {
+        if ($this->status === 'maintenance') {
+            return;
+        }
+
+        $this->update([
+            'status' => $this->residents()
+                ->where('is_active', true)
+                ->exists()
+                ? 'occupied'
+                : 'available',
+        ]);
+    }
 }

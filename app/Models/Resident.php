@@ -30,4 +30,21 @@ class Resident extends Model
     {
         return $this->belongsTo(User::class);
     }
+    protected static function booted(): void
+    {
+        static::saved(function (Resident $resident) {
+            $resident->apartment?->updateOccupancyStatus();
+
+            if ($resident->wasChanged('apartment_id')) {
+                $oldApartmentId = $resident->getOriginal('apartment_id');
+
+                Apartment::find($oldApartmentId)
+                        ?->updateOccupancyStatus();
+            }
+        });
+
+        static::deleted(function (Resident $resident) {
+            $resident->apartment?->updateOccupancyStatus();
+        });
+    }
 }
