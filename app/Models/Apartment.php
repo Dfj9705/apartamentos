@@ -33,4 +33,16 @@ class Apartment extends Model
                 : 'available',
         ]);
     }
+
+    public function reservations(): HasMany
+    {
+        return $this->hasMany(Reservation::class);
+    }
+
+    public function getDisplayNameAttribute(): string
+    {
+        return $this->tower
+            ? "Torre {$this->tower} - {$this->number}"
+            : $this->number;
+    }
 }
