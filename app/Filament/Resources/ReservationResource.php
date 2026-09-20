@@ -46,7 +46,9 @@ class ReservationResource extends Resource
                             ->preload()
                             ->live()
                             ->default(fn() => auth()->id())
-                            ->disabled(fn() => !auth()->user()->hasRole('Administrador'))
+                            ->disabled(
+                                fn() => !auth()->user()->can('reservas.gestionar')
+                            )
                             ->dehydrated()
                             ->afterStateUpdated(function ($state, Set $set) {
                                 if (!$state) {
@@ -184,8 +186,9 @@ class ReservationResource extends Resource
                                 'completed' => 'Finalizada',
                             ])
                             ->default('confirmed')
-                            ->disabled(fn() => !auth()->user()->hasRole('Administrador'))
-                            ->dehydrated()
+                            ->disabled(
+                                fn() => !auth()->user()->can('reservas.gestionar')
+                            )->dehydrated()
                             ->required(),
 
                         Forms\Components\Textarea::make('notes')
@@ -276,12 +279,15 @@ class ReservationResource extends Resource
                     ->visible(function (Reservation $record): bool {
                         $user = auth()->user();
 
-                        if ($record->status !== 'confirmed') {
+                        if (!$user || $record->status !== 'confirmed') {
                             return false;
                         }
 
-                        return $user->hasRole('Administrador')
-                            || $record->user_id === $user->id;
+                        if ($user->can('reservas.gestionar')) {
+                            return true;
+                        }
+
+                        return $record->user_id === $user->id;
                     })
                     ->action(function (Reservation $record): void {
                         $record->update([
@@ -328,7 +334,11 @@ class ReservationResource extends Resource
 
         $user = auth()->user();
 
-        if (!$user->hasRole('Administrador')) {
+        if (!$user) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        if ($user->hasRole('Residente')) {
             $query->where('user_id', $user->id);
         }
 
@@ -339,7 +349,14 @@ class ReservationResource extends Resource
     {
         $user = auth()->user();
 
-        if ($user->hasRole('Administrador')) {
+        if (!$user || !$user->can('reservas.editar')) {
+            return false;
+        }
+
+        if (
+            $user->hasRole('Administrador') ||
+            $user->hasRole('Administración')
+        ) {
             return true;
         }
 
@@ -347,13 +364,24 @@ class ReservationResource extends Resource
             && $record->status === 'confirmed';
     }
 
+
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->can('reservas.ver') ?? false;
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->can('reservas.crear') ?? false;
+    }
+
     public static function canDelete($record): bool
     {
-        return false;
+        return auth()->user()?->can('reservas.eliminar') ?? false;
     }
 
     public static function canDeleteAny(): bool
     {
-        return false;
+        return auth()->user()?->can('reservas.eliminar') ?? false;
     }
 }

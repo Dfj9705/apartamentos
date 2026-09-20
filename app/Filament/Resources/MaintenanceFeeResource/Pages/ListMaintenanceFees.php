@@ -21,6 +21,10 @@ class ListMaintenanceFees extends ListRecords
             Actions\Action::make('generateFees')
                 ->label('Generar cuotas')
                 ->icon('heroicon-o-banknotes')
+                ->visible(
+                    fn(): bool =>
+                        auth()->user()?->can('cuotas.crear') ?? false
+                )
                 ->form([
                     Forms\Components\Select::make('month')
                         ->label('Mes')

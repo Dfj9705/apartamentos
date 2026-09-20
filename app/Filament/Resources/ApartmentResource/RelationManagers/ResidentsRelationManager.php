@@ -106,11 +106,40 @@ class ResidentsRelationManager extends RelationManager
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make()
-                    ->label('Agregar residente'),
+                    ->label('Agregar residente')
+                    ->visible(
+                        fn(): bool =>
+                            auth()->user()?->can('residentes.crear') ?? false
+                    ),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->visible(
+                        fn(): bool =>
+                            auth()->user()?->can('residentes.editar') ?? false
+                    ),
+
+                Tables\Actions\DeleteAction::make()
+                    ->visible(
+                        fn(): bool =>
+                            auth()->user()?->can('residentes.eliminar') ?? false
+                    ),
             ]);
+
+    }
+
+    public function canCreate(): bool
+    {
+        return auth()->user()?->can('residentes.crear') ?? false;
+    }
+
+    public function canEdit($record): bool
+    {
+        return auth()->user()?->can('residentes.editar') ?? false;
+    }
+
+    public function canDelete($record): bool
+    {
+        return auth()->user()?->can('residentes.eliminar') ?? false;
     }
 }

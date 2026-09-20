@@ -56,6 +56,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'pagos.ver',
             'pagos.registrar',
             'pagos.editar',
+            'pagos.eliminar'
         ];
 
         foreach ($permissions as $permission) {

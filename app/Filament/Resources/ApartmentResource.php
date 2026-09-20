@@ -128,7 +128,8 @@ class ApartmentResource extends Resource
                     ->requiresConfirmation()
                     ->visible(
                         fn(Apartment $record): bool =>
-                            $record->status !== 'maintenance'
+                            auth()->user()?->can('apartamentos.editar')
+                            && $record->status !== 'maintenance'
                     )
                     ->action(function (Apartment $record) {
                         $record->update([
@@ -143,7 +144,8 @@ class ApartmentResource extends Resource
                     ->requiresConfirmation()
                     ->visible(
                         fn(Apartment $record): bool =>
-                            $record->status === 'maintenance'
+                            auth()->user()?->can('apartamentos.editar')
+                            && $record->status === 'maintenance'
                     )
                     ->action(function (Apartment $record) {
                         $record->update([
@@ -177,5 +179,30 @@ class ApartmentResource extends Resource
             'create' => Pages\CreateApartment::route('/create'),
             'edit' => Pages\EditApartment::route('/{record}/edit'),
         ];
+    }
+
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->can('apartamentos.ver') ?? false;
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->can('apartamentos.crear') ?? false;
+    }
+
+    public static function canEdit($record): bool
+    {
+        return auth()->user()?->can('apartamentos.editar') ?? false;
+    }
+
+    public static function canDelete($record): bool
+    {
+        return auth()->user()?->can('apartamentos.eliminar') ?? false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return auth()->user()?->can('apartamentos.eliminar') ?? false;
     }
 }

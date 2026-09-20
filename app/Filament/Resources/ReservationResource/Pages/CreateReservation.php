@@ -7,7 +7,8 @@ use App\Models\User;
 use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
 use App\Notifications\ReservationConfirmedNotification;
-
+use App\Models\Reservation;
+use Illuminate\Validation\ValidationException;
 class CreateReservation extends CreateRecord
 {
     protected static string $resource = ReservationResource::class;
@@ -16,17 +17,49 @@ class CreateReservation extends CreateRecord
     {
         $user = auth()->user();
 
-        if (!$user->hasRole('Administrador')) {
+        /*
+        |--------------------------------------------------------------------------
+        | Residente
+        |--------------------------------------------------------------------------
+        |
+        | Solo puede crear reservas para sí mismo y para su apartamento.
+        |
+        */
+        if ($user->hasRole('Residente')) {
             $data['user_id'] = $user->id;
             $data['apartment_id'] = $user->apartment()?->id;
             $data['status'] = 'confirmed';
+
+            return $data;
         }
 
-        $reservationUser = User::with('resident')
-            ->findOrFail($data['user_id']);
+        /*
+        |--------------------------------------------------------------------------
+        | Administración
+        |--------------------------------------------------------------------------
+        |
+        | Puede seleccionar al usuario, pero el apartamento debe ser
+        | obligatoriamente el asociado a ese usuario.
+        |
+        */
+        if ($user->hasRole('Administración')) {
+            $reservationUser = User::with('resident')
+                ->findOrFail($data['user_id']);
 
-        $data['apartment_id'] =
-            $reservationUser->resident?->apartment_id;
+            $data['apartment_id'] =
+                $reservationUser->resident?->apartment_id;
+
+            return $data;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Administrador
+        |--------------------------------------------------------------------------
+        |
+        | Puede seleccionar usuario y apartamento independientemente.
+        |
+        */
 
         return $data;
     }
@@ -34,7 +67,10 @@ class CreateReservation extends CreateRecord
     {
         $user = auth()->user();
 
-        if ($user->hasRole('Administrador')) {
+        if (
+            $user->hasRole('Administrador') ||
+            $user->hasRole('Administración')
+        ) {
             return true;
         }
 
@@ -58,6 +94,25 @@ class CreateReservation extends CreateRecord
             $reservation->user->notify(
                 new ReservationConfirmedNotification($reservation)
             );
+        }
+    }
+
+    protected function beforeCreate(): void
+    {
+        $data = $this->form->getState();
+
+        if (
+            Reservation::hasOverlap(
+                commonAreaId: (int) $data['common_area_id'],
+                date: $data['reservation_date'],
+                startTime: $data['start_time'],
+                endTime: $data['end_time'],
+            )
+        ) {
+            throw ValidationException::withMessages([
+                'data.start_time' =>
+                    'Este horario acaba de ser reservado. Seleccione otro horario.',
+            ]);
         }
     }
 }

@@ -188,7 +188,8 @@ class MaintenanceFeeResource extends Resource
                     ->color('success')
                     ->visible(
                         fn(MaintenanceFee $record): bool =>
-                            $record->status !== 'paid'
+                            auth()->user()?->can('pagos.registrar')
+                            && $record->status !== 'paid'
                     )
                     ->form([
                         Forms\Components\TextInput::make('amount')
@@ -223,7 +224,9 @@ class MaintenanceFeeResource extends Resource
 
                     ])
                     ->action(function (MaintenanceFee $record, array $data): void {
-
+                        if (!auth()->user()?->can('pagos.registrar')) {
+                            abort(403);
+                        }
                         $payment = $record->payment()->create([
                             'amount' => $data['amount'],
                             'paid_at' => $data['paid_at'],
@@ -278,8 +281,26 @@ class MaintenanceFeeResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()
+        $query = parent::getEloquentQuery()
             ->with(['apartment', 'payment']);
+
+        $user = auth()->user();
+
+        if (!$user) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        if ($user->hasRole('Residente')) {
+            $apartmentId = $user->apartment()?->id;
+
+            if (!$apartmentId) {
+                return $query->whereRaw('1 = 0');
+            }
+
+            $query->where('apartment_id', $apartmentId);
+        }
+
+        return $query;
     }
 
     public static function getPages(): array
@@ -289,5 +310,30 @@ class MaintenanceFeeResource extends Resource
             'create' => Pages\CreateMaintenanceFee::route('/create'),
             'edit' => Pages\EditMaintenanceFee::route('/{record}/edit'),
         ];
+    }
+
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->can('cuotas.ver') ?? false;
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->can('cuotas.crear') ?? false;
+    }
+
+    public static function canEdit($record): bool
+    {
+        return auth()->user()?->can('cuotas.editar') ?? false;
+    }
+
+    public static function canDelete($record): bool
+    {
+        return auth()->user()?->can('cuotas.eliminar') ?? false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return auth()->user()?->can('cuotas.eliminar') ?? false;
     }
 }

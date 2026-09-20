@@ -6,6 +6,8 @@ use App\Filament\Resources\ReservationResource;
 use App\Models\User;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
+use App\Models\Reservation;
+use Illuminate\Validation\ValidationException;
 
 class EditReservation extends EditRecord
 {
@@ -14,7 +16,11 @@ class EditReservation extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            Actions\DeleteAction::make()
+                ->visible(
+                    fn(): bool =>
+                        auth()->user()?->can('reservas.eliminar') ?? false
+                ),
         ];
     }
 
@@ -22,16 +28,44 @@ class EditReservation extends EditRecord
     {
         $user = auth()->user();
 
-        if (!$user->hasRole('Administrador')) {
+        if ($user->hasRole('Residente')) {
             $data['user_id'] = $user->id;
             $data['apartment_id'] = $user->apartment()?->id;
+
+            return $data;
         }
 
-        $reservationUser = User::with('resident')
-            ->findOrFail($data['user_id']);
+        if ($user->hasRole('Administración')) {
+            $reservationUser = User::with('resident')
+                ->findOrFail($data['user_id']);
 
-        $data['apartment_id'] = $reservationUser->resident?->apartment_id;
+            $data['apartment_id'] =
+                $reservationUser->resident?->apartment_id;
 
+            return $data;
+        }
+
+        // Administrador conserva usuario y apartamento seleccionados.
         return $data;
+    }
+
+    protected function beforeSave(): void
+    {
+        $data = $this->form->getState();
+
+        if (
+            Reservation::hasOverlap(
+                commonAreaId: (int) $data['common_area_id'],
+                date: $data['reservation_date'],
+                startTime: $data['start_time'],
+                endTime: $data['end_time'],
+                ignoreReservationId: $this->record->id,
+            )
+        ) {
+            throw ValidationException::withMessages([
+                'data.start_time' =>
+                    'Este horario ya está reservado. Seleccione otro horario.',
+            ]);
+        }
     }
 }
