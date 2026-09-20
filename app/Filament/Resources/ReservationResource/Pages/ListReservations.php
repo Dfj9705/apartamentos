@@ -25,13 +25,17 @@ class ListReservations extends ListRecords
 
         Reservation::query()
             ->where('status', 'confirmed')
-            ->get()
-            ->each(function (Reservation $reservation) {
-                if ($reservation->hasEnded()) {
-                    $reservation->update([
-                        'status' => 'completed',
-                    ]);
-                }
-            });
+            ->where(function ($query) {
+                $query
+                    ->whereDate('reservation_date', '<', today())
+                    ->orWhere(function ($query) {
+                        $query
+                            ->whereDate('reservation_date', today())
+                            ->whereTime('end_time', '<', now()->format('H:i:s'));
+                    });
+            })
+            ->update([
+                'status' => 'completed',
+            ]);
     }
 }
