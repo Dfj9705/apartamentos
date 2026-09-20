@@ -25,10 +25,10 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             ->default()
             ->id('admin')
-            ->path('admin')
+            ->path('')
             ->login()
             ->colors([
-                'primary' => Color::Amber,
+                'primary' => Color::Teal,
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
@@ -55,6 +55,10 @@ class AdminPanelProvider extends PanelProvider
                 'Operaciones',
                 'Finanzas',
             ])
+            ->sidebarCollapsibleOnDesktop()
+            ->brandLogo(asset('images/logo_apto.png'))
+            ->favicon(asset('images/logo_apto.png'))
+            ->brandLogoHeight('3rem')
             ->authMiddleware([
                 Authenticate::class,
             ]);
