@@ -30,22 +30,13 @@ class EditReservation extends EditRecord
 
         if ($user->hasRole('Residente')) {
             $data['user_id'] = $user->id;
-            $data['apartment_id'] = $user->apartment()?->id;
-
-            return $data;
         }
 
-        if ($user->hasRole('Administración')) {
-            $reservationUser = User::with('resident')
-                ->findOrFail($data['user_id']);
+        $reservationUser = User::with('resident')
+            ->findOrFail($data['user_id']);
 
-            $data['apartment_id'] =
-                $reservationUser->resident?->apartment_id;
+        $data['apartment_id'] = $reservationUser->resident?->apartment_id;
 
-            return $data;
-        }
-
-        // Administrador conserva usuario y apartamento seleccionados.
         return $data;
     }
 

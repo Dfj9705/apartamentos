@@ -17,49 +17,15 @@ class CreateReservation extends CreateRecord
     {
         $user = auth()->user();
 
-        /*
-        |--------------------------------------------------------------------------
-        | Residente
-        |--------------------------------------------------------------------------
-        |
-        | Solo puede crear reservas para sí mismo y para su apartamento.
-        |
-        */
         if ($user->hasRole('Residente')) {
             $data['user_id'] = $user->id;
-            $data['apartment_id'] = $user->apartment()?->id;
             $data['status'] = 'confirmed';
-
-            return $data;
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Administración
-        |--------------------------------------------------------------------------
-        |
-        | Puede seleccionar al usuario, pero el apartamento debe ser
-        | obligatoriamente el asociado a ese usuario.
-        |
-        */
-        if ($user->hasRole('Administración')) {
-            $reservationUser = User::with('resident')
-                ->findOrFail($data['user_id']);
+        $reservationUser = User::with('resident')
+            ->findOrFail($data['user_id']);
 
-            $data['apartment_id'] =
-                $reservationUser->resident?->apartment_id;
-
-            return $data;
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Administrador
-        |--------------------------------------------------------------------------
-        |
-        | Puede seleccionar usuario y apartamento independientemente.
-        |
-        */
+        $data['apartment_id'] = $reservationUser->resident?->apartment_id;
 
         return $data;
     }

@@ -299,6 +299,31 @@ class ReservationResource extends Resource
                         return $record->user_id === $user->id;
                     })
                     ->action(function (Reservation $record): void {
+                        $user = auth()->user();
+
+                        if (!$user) {
+                            abort(403);
+                        }
+
+                        $record->refresh();
+
+                        $canManage = $user->can('reservas.gestionar');
+                        $isOwner = $record->user_id === $user->id;
+
+                        if (!$canManage && !$isOwner) {
+                            abort(403);
+                        }
+
+                        if ($record->status !== 'confirmed') {
+                            \Filament\Notifications\Notification::make()
+                                ->title('La reserva no puede cancelarse')
+                                ->body('Esta reserva ya no se encuentra confirmada.')
+                                ->warning()
+                                ->send();
+
+                            return;
+                        }
+
                         $record->update([
                             'status' => 'cancelled',
                         ]);
@@ -314,6 +339,11 @@ class ReservationResource extends Resource
                                 new ReservationCancelledNotification($record)
                             );
                         }
+
+                        \Filament\Notifications\Notification::make()
+                            ->title('Reserva cancelada')
+                            ->success()
+                            ->send();
                     }),
             ])
             ->bulkActions([
