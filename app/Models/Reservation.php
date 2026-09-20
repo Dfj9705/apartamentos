@@ -5,9 +5,12 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Reservation extends Model
 {
+    use LogsActivity;
     protected $fillable = [
         'user_id',
         'apartment_id',
@@ -69,5 +72,22 @@ class Reservation extends Model
         );
 
         return $end->isPast();
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly([
+                'user_id',
+                'apartment_id',
+                'common_area_id',
+                'reservation_date',
+                'start_time',
+                'end_time',
+                'status',
+                'notes',
+            ])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
     }
 }

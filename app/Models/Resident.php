@@ -4,9 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Resident extends Model
 {
+    use LogsActivity;
     protected $fillable = [
         'apartment_id',
         'user_id',
@@ -52,5 +55,21 @@ class Resident extends Model
         static::deleted(function (Resident $resident) {
             $resident->apartment?->updateOccupancyStatus();
         });
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly([
+                'apartment_id',
+                'user_id',
+                'name',
+                'phone',
+                'email',
+                'type',
+                'is_active',
+            ])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
     }
 }

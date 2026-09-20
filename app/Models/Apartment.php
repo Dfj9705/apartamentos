@@ -4,9 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Apartment extends Model
 {
+    use LogsActivity;
     protected $fillable = [
         'number',
         'tower',
@@ -49,5 +52,18 @@ class Apartment extends Model
     public function maintenanceFees(): HasMany
     {
         return $this->hasMany(MaintenanceFee::class);
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly([
+                'number',
+                'tower',
+                'floor',
+                'status',
+            ])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
     }
 }
