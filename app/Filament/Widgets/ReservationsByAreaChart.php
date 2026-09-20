@@ -44,4 +44,12 @@ class ReservationsByAreaChart extends ChartWidget
     {
         return 'bar';
     }
+
+    public static function canView(): bool
+    {
+        return auth()->user()?->hasAnyRole([
+            'Administrador',
+            'Administración',
+        ]) ?? false;
+    }
 }

@@ -22,7 +22,16 @@ class ReservationResource extends Resource
 {
     protected static ?string $model = Reservation::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-calendar-days';
+
+    protected static ?string $navigationLabel = 'Reservas';
+
+    protected static ?string $modelLabel = 'Reserva';
+
+    protected static ?string $pluralModelLabel = 'Reservas';
+    protected static ?string $navigationGroup = 'Operaciones';
+
+    protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form
     {

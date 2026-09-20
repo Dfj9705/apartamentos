@@ -14,6 +14,12 @@ class ApartmentStatsOverview extends BaseWidget
     protected static ?int $sort = 1;
     protected function getStats(): array
     {
+        $user = auth()->user();
+
+        if ($user?->hasRole('Residente')) {
+            return $this->getResidentStats();
+        }
+
         $apartments = Apartment::count();
 
         $activeResidents = Resident::query()
@@ -34,7 +40,6 @@ class ApartmentStatsOverview extends BaseWidget
             ->whereMonth('paid_at', now()->month)
             ->whereYear('paid_at', now()->year)
             ->sum('amount');
-
         return [
             Stat::make(
                 'Apartamentos registrados',
@@ -72,6 +77,69 @@ class ApartmentStatsOverview extends BaseWidget
                     ucfirst(now()->translatedFormat('F Y'))
                 )
                 ->icon('heroicon-o-banknotes'),
+        ];
+    }
+
+    protected function getResidentStats(): array
+    {
+        $user = auth()->user();
+        $apartment = $user->apartment();
+
+        if (!$apartment) {
+            return [
+                Stat::make('Apartamento', 'Sin apartamento')
+                    ->description('No tienes un apartamento asociado')
+                    ->icon('heroicon-o-home'),
+            ];
+        }
+
+        $pendingFees = MaintenanceFee::query()
+            ->where('apartment_id', $apartment->id)
+            ->where('status', '!=', 'paid')
+            ->whereDate('due_date', '>=', today())
+            ->count();
+
+        $overdueFees = MaintenanceFee::query()
+            ->where('apartment_id', $apartment->id)
+            ->where('status', '!=', 'paid')
+            ->whereDate('due_date', '<', today())
+            ->count();
+
+        $pendingBalance = MaintenanceFee::query()
+            ->where('apartment_id', $apartment->id)
+            ->where('status', '!=', 'paid')
+            ->sum('amount');
+
+        return [
+            Stat::make(
+                'Mi apartamento',
+                $apartment->display_name
+            )
+                ->description('Apartamento asociado')
+                ->icon('heroicon-o-home'),
+
+            Stat::make(
+                'Cuotas pendientes',
+                $pendingFees
+            )
+                ->description('Dentro del plazo')
+                ->icon('heroicon-o-clock'),
+
+            Stat::make(
+                'Cuotas vencidas',
+                $overdueFees
+            )
+                ->description('Fuera del plazo de pago')
+                ->icon('heroicon-o-exclamation-triangle')
+                ->color($overdueFees > 0 ? 'danger' : 'success'),
+
+            Stat::make(
+                'Saldo pendiente',
+                'Q ' . number_format($pendingBalance, 2)
+            )
+                ->description('Total pendiente de pago')
+                ->icon('heroicon-o-banknotes')
+                ->color($pendingBalance > 0 ? 'warning' : 'success'),
         ];
     }
 }

@@ -25,6 +25,10 @@ class UpcomingReservations extends BaseWidget
                         'apartment',
                         'user',
                     ])
+                    ->when(
+                        auth()->user()?->hasRole('Residente'),
+                        fn($query) => $query->where('user_id', auth()->id())
+                    )
                     ->where('status', 'confirmed')
                     ->whereDate('reservation_date', '>=', today())
                     ->orderBy('reservation_date')
@@ -50,7 +54,8 @@ class UpcomingReservations extends BaseWidget
                     ->label('Apartamento'),
 
                 Tables\Columns\TextColumn::make('user.name')
-                    ->label('Usuario'),
+                    ->label('Usuario')
+                    ->visible(fn(): bool => !auth()->user()?->hasRole('Residente')),
             ])
             ->paginated([5, 10, 25])
             ->defaultPaginationPageOption(5);

@@ -22,7 +22,9 @@ class CommonAreaResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Áreas comunes';
 
-    protected static ?string $navigationGroup = 'Administración';
+    protected static ?string $navigationGroup = 'Operaciones';
+
+    protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form
     {

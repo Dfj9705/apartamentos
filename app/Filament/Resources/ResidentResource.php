@@ -25,7 +25,9 @@ class ResidentResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Residentes';
 
-    protected static ?string $navigationGroup = 'Administración';
+    protected static ?string $navigationGroup = 'Gestión';
+
+    protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form
     {

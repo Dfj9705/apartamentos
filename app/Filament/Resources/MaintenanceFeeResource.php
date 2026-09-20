@@ -20,7 +20,17 @@ class MaintenanceFeeResource extends Resource
 {
     protected static ?string $model = MaintenanceFee::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-currency-dollar';
+
+    protected static ?string $navigationLabel = 'Cuotas de mantenimiento';
+
+    protected static ?string $modelLabel = 'Cuota de mantenimiento';
+
+    protected static ?string $pluralModelLabel = 'Cuotas de mantenimiento';
+
+    protected static ?string $navigationGroup = 'Finanzas';
+
+    protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form
     {

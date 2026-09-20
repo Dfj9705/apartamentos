@@ -25,7 +25,9 @@ class ApartmentResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Apartamentos';
 
-    protected static ?string $navigationGroup = 'Administración';
+    protected static ?string $navigationGroup = 'Gestión';
+
+    protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form
     {
