@@ -136,9 +136,7 @@ class CommonAreaResource extends Resource
                 Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
+
             ]);
     }
 
@@ -175,7 +173,13 @@ class CommonAreaResource extends Resource
 
     public static function canDelete($record): bool
     {
-        return auth()->user()?->can('areas.eliminar') ?? false;
+        $user = auth()->user();
+
+        if (!$user?->can('areas.eliminar')) {
+            return false;
+        }
+
+        return !$record->reservations()->exists();
     }
 
     public static function canDeleteAny(): bool
