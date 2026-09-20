@@ -195,9 +195,8 @@ class ReservationResource extends Resource
                                 'completed' => 'Finalizada',
                             ])
                             ->default('confirmed')
-                            ->disabled(
-                                fn() => !auth()->user()->can('reservas.gestionar')
-                            )->dehydrated()
+                            ->disabled()
+                            ->dehydrated()
                             ->required(),
 
                         Forms\Components\Textarea::make('notes')
