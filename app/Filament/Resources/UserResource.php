@@ -174,11 +174,23 @@ class UserResource extends Resource
 
     public static function canDelete($record): bool
     {
-        if (auth()->id() === $record->id) {
+        $user = auth()->user();
+
+        if (!$user?->can('usuarios.eliminar')) {
             return false;
         }
 
-        return auth()->user()?->can('usuarios.eliminar') ?? false;
+        // No permitir eliminar nuestra propia cuenta.
+        if ($user->id === $record->id) {
+            return false;
+        }
+
+        // Conservar usuarios que tengan historial de reservas.
+        if ($record->reservations()->exists()) {
+            return false;
+        }
+
+        return true;
     }
     public static function canDeleteAny(): bool
     {

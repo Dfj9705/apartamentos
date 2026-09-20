@@ -160,9 +160,7 @@ class ApartmentResource extends Resource
                     }),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
+
             ]);
     }
 
@@ -200,7 +198,15 @@ class ApartmentResource extends Resource
 
     public static function canDelete($record): bool
     {
-        return auth()->user()?->can('apartamentos.eliminar') ?? false;
+        $user = auth()->user();
+
+        if (!$user?->can('apartamentos.eliminar')) {
+            return false;
+        }
+
+        return !$record->residents()->exists()
+            && !$record->reservations()->exists()
+            && !$record->maintenanceFees()->exists();
     }
 
     public static function canDeleteAny(): bool
