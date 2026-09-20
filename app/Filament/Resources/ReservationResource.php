@@ -391,6 +391,11 @@ class ReservationResource extends Resource
             return false;
         }
 
+        // Solo las reservas confirmadas pueden modificarse.
+        if ($record->status !== 'confirmed') {
+            return false;
+        }
+
         if (
             $user->hasRole('Administrador') ||
             $user->hasRole('Administración')
@@ -398,8 +403,7 @@ class ReservationResource extends Resource
             return true;
         }
 
-        return $record->user_id === $user->id
-            && $record->status === 'confirmed';
+        return $record->user_id === $user->id;
     }
 
 
