@@ -252,6 +252,18 @@ class MaintenanceFeeResource extends Resource
                         if (!auth()->user()?->can('pagos.registrar')) {
                             abort(403);
                         }
+
+                        $record->refresh();
+
+                        if ($record->status === 'paid' || $record->payment()->exists()) {
+                            Notification::make()
+                                ->title('Pago ya registrado')
+                                ->body('Esta cuota ya cuenta con un pago registrado.')
+                                ->warning()
+                                ->send();
+
+                            return;
+                        }
                         $payment = $record->payment()->create([
                             'amount' => $data['amount'],
                             'paid_at' => $data['paid_at'],
@@ -291,9 +303,7 @@ class MaintenanceFeeResource extends Resource
                 Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
+
             ]);
     }
 
@@ -349,12 +359,24 @@ class MaintenanceFeeResource extends Resource
 
     public static function canEdit($record): bool
     {
-        return auth()->user()?->can('cuotas.editar') ?? false;
+        $user = auth()->user();
+
+        if (!$user?->can('cuotas.editar')) {
+            return false;
+        }
+
+        return !$record->payment()->exists();
     }
 
     public static function canDelete($record): bool
     {
-        return auth()->user()?->can('cuotas.eliminar') ?? false;
+        $user = auth()->user();
+
+        if (!$user?->can('cuotas.eliminar')) {
+            return false;
+        }
+
+        return !$record->payment()->exists();
     }
 
     public static function canDeleteAny(): bool
