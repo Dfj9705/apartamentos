@@ -139,7 +139,7 @@ class MaintenanceFeeResource extends Resource
                     ->placeholder('—')
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make('status')
+                Tables\Columns\TextColumn::make('current_status')
                     ->label('Estado')
                     ->badge()
                     ->formatStateUsing(fn(string $state): string => match ($state) {
@@ -156,13 +156,28 @@ class MaintenanceFeeResource extends Resource
                     }),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('status')
+                Tables\Filters\SelectFilter::make('current_status')
                     ->label('Estado')
                     ->options([
                         'pending' => 'Pendiente',
-                        'paid' => 'Pagada',
                         'overdue' => 'Vencida',
-                    ]),
+                        'paid' => 'Pagada',
+                    ])
+                    ->query(function ($query, array $data) {
+                        return match ($data['value'] ?? null) {
+                            'paid' => $query->where('status', 'paid'),
+
+                            'overdue' => $query
+                                ->where('status', '!=', 'paid')
+                                ->whereDate('due_date', '<', today()),
+
+                            'pending' => $query
+                                ->where('status', '!=', 'paid')
+                                ->whereDate('due_date', '>=', today()),
+
+                            default => $query,
+                        };
+                    }),
 
                 Tables\Filters\SelectFilter::make('month')
                     ->label('Mes')
